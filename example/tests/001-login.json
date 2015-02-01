@@ -1,0 +1,59 @@
+{
+	"tests" : [
+		{
+			"name" : "Try to login with a wrong data",
+			"path" : "/login",
+			"method" : "POST",
+			"request_params" : {
+				"email" : "empty@me.com",
+				"password" : "12345678"
+			},
+			"validation" : {
+				"http_code" : 406,
+				"response_params" : {
+					"code" : 406,
+					"message" : "$nn"
+				}
+			}
+		},
+		{
+			"name" : "Try to login with right data",
+			"path" : "/login",
+			"method" : "POST",
+			"request_params" : {
+				"email" : "test-admin@domain.com",
+				"password" : "12345678"
+			},
+			"validation" : {
+				"http_code" : 200,
+				"response_params" : {
+					"account" : {
+						"email" : "test-admin@domain.com",
+						"role" : 99
+					}
+				}
+			}
+		},
+		{
+			"name" : "Create account with mock",
+			"path" : "/accounts",
+			"method" : "POST",
+			"request_params" : "account",
+			"validation" : {
+				"http_code" : 200,
+				"mock" : "account"
+			},
+			"save_global" : [
+				{ "key" : "account_id", "keypath" : "account.id" }
+			]
+		},
+		{
+			"name" : "Delete account with id {$account_id}",
+			"path" : "/accounts/{$account_id}",
+			"method" : "DELETE",
+			"validation" : {
+				"http_code" : 200
+			}
+		}
+	]
+}

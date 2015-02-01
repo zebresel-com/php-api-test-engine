@@ -1,0 +1,14 @@
+{
+	"name": "s3cc0/restful-api-test-engine",
+	"description": "This is a simple API Test-Engine. With simple JSON files you can run tests for all your RESTful API's.",
+	"keywords": ["restful", "test", "api"],
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Kristof Friess"
+		}
+	],
+	"require": {
+		"php": ">=5.6"
+	}
+}
