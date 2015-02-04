@@ -94,3 +94,13 @@ You can also use mocks to validate the response values. For this add `mock` insi
 	"mock" : "account"
 },
 ```
+
+###Extended Header###
+
+You can extend and overwrite the reuqest header using the `header` in the test set. The header variables will also listing to the global saved variables.
+
+```json
+"header" : {
+    "Authorization" : "Bearer {$access_token}" 
+}
+```

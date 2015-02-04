@@ -138,9 +138,10 @@ class APITestEngine
      * @param  string   $url
      * @param  string   $method GET; POST; PUT; DELETE; ...
      * @param  array    $data
+     * @param  array    $header Can be use to extend the default request header with other variables
      * @param  function $cb functoin($header, $response) { ... }
      */
-    private function test($name, $url, $method, $data, $cb = null)
+    private function test($name, $url, $method, $data, $header, $cb = null)
     {
         if (is_callable($data))
         {
@@ -195,10 +196,23 @@ class APITestEngine
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($method));   
 
             // set header
-            curl_setopt($curl, CURLOPT_HTTPHEADER, array(                                                                          
-                'Content-Type: application/json; charset=utf-8',
-                'Content-Length: ' . mb_strlen($data_string))
-            );
+            $defaultHeader = [
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Content-Length' => mb_strlen($data_string)
+            ];
+
+            if ($header !== null && is_array($header))
+            {
+                $defaultHeader = array_merge($defaultHeader, $header);
+            }
+
+            $finalHeader = [];
+            foreach ($defaultHeader as $key => $value)
+            {
+                $finalHeader[] = "{$key}: {$value}";
+            }
+            
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $finalHeader);
             //curl_setopt($curl, CURLOPT_HTTPHEADER,array("Expect:"));
 
             $before = microtime(true);
@@ -391,7 +405,17 @@ class APITestEngine
                     $path = strtr($test['path'], $GLOBALS['params']);
                     $name = strtr($test['name'], $GLOBALS['params']);
 
-                    $this->test($name, $this->url.$path, $test['method'], $requestParams, function($header, $resp) use ($test) {
+                    // check is there a header?
+                    if (isset($test['header']))
+                    {
+                        $extendedHeader = $test['header'];
+                        foreach ($extendedHeader as $key => $value)
+                        {
+                            $extendedHeader[$key] = strtr($extendedHeader[$key], $GLOBALS['params']);
+                        }
+                    }
+
+                    $this->test($name, $this->url.$path, $test['method'], $requestParams, $extendedHeader, function($header, $resp) use ($test) {
 
                         $validation = $test['validation'];
 
