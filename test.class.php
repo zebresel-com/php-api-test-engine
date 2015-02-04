@@ -199,7 +199,7 @@ class APITestEngine
                 'Content-Type: application/json; charset=utf-8',
                 'Content-Length: ' . mb_strlen($data_string))
             );
-            curl_setopt($curl, CURLOPT_HTTPHEADER,array("Expect:"));
+            //curl_setopt($curl, CURLOPT_HTTPHEADER,array("Expect:"));
 
             $before = microtime(true);
 
@@ -251,6 +251,8 @@ class APITestEngine
             if ($result === false)
             {
                 ++$this->countFails;
+                $body = "\t".str_replace("\n", "\n\t", $body)."\n";
+                $this->logMsg('DEBUG', $body);
                 $this->logMsg('ERROR', "Test: {$name} failed.");
             }
             else
