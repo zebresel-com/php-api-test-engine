@@ -238,9 +238,12 @@ class APITestEngine
                 }
                 else
                 {
-                    list ($key, $value) = explode(': ', $line);
+                    $expVal = explode(': ', $line);
 
-                    $headers[$key] = $value;
+                    if(count($expVal) >= 2 && isset($expVal[0]) && isset($expVal[1]) )
+                    {
+                        $headers[$expVal[0]] = $expVal[1];
+                    }
                 }
             }
 
@@ -375,7 +378,7 @@ class APITestEngine
     private function testParser($path)
     {
         // check gloab params already initialized
-        if (!is_array($GLOBALS['params']))
+        if (!isset($GLOBALS['params']) || !is_array($GLOBALS['params']))
         {
             $GLOBALS['params'] = [];
         }
