@@ -14,7 +14,7 @@ namespace com\bp;
 class APITestEngine
 {
     private $count          = 0;        // used to count the tests
-    private $countFailes    = 0;        // used to count the failed tests
+    private $countFails     = 0;        // used to count the failed tests
     private $tmpPath        = null;     // is a writeable tmp directory
     private $mockDir        = null;
     private $url            = 'http://localhost';  // without '/' at the end
@@ -406,6 +406,7 @@ class APITestEngine
                     $name = strtr($test['name'], $GLOBALS['params']);
 
                     // check is there a header?
+                    $extendedHeader = null;
                     if (isset($test['header']))
                     {
                         $extendedHeader = $test['header'];
