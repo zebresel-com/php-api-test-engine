@@ -3,6 +3,7 @@ Introduction
 
 This bundle provides a class for a simple API Test. The tests run on the terminal using `run.php`.
 
+<img alt="PHP API test engine screenshot" src="/../screenshots/php_api_test_engine_preview.png?raw=true" width="600" align="center"/>
 
 How to use?
 ------------
