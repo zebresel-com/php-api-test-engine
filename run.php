@@ -36,8 +36,18 @@ if (count($argv) >= 3)
 
 	// display the result
 	$engine->printResult();	
+
+	if ($engine->fails() === 0)
+	{
+		exit(0);
+	}
+	else
+	{
+		exit(1);
+	}
 }
 else
 {
 	echo " - Tests-Path missing \n";
+	exit(1);
 }

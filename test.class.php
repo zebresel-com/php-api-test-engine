@@ -54,6 +54,15 @@ class APITestEngine
     }
 
     /**
+     * This method will return the current fails of tests
+     * @return int
+     */
+    public function fails()
+    {
+        return $this->countFails;
+    }
+
+    /**
      * This method will start the tests readed out of the given directory.
      * @param  string $path Directory Path with tests
      */
