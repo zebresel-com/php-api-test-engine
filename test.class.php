@@ -239,7 +239,9 @@ class APITestEngine
 
             foreach (explode("\r\n", $headerStr) as $i => $line)
             {   
-                if ($i === 0)
+
+                // check line starts with HTTP (status), we will save only the last status code
+                if ('HTTP' === substr($line, 0, 4))
                 {
                     $headers['HTTP-Status'] = $line;
                     $tmpLine = explode(' ', $line);
@@ -247,8 +249,7 @@ class APITestEngine
                 }
                 else
                 {
-                    $expVal = explode(': ', $line);
-
+                    $expVal = preg_split('/:\s*/', $line);
                     if(count($expVal) >= 2 && isset($expVal[0]) && isset($expVal[1]) )
                     {
                         $headers[$expVal[0]] = $expVal[1];
