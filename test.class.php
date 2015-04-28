@@ -18,7 +18,10 @@ class APITestEngine
     private $tmpPath        = null;     // is a writeable tmp directory
     private $mockDir        = null;
     private $url            = 'http://localhost';  // without '/' at the end
-
+    private $startTime      = null;     // saved the start time for time tracking
+    private $endTime        = null;     // saved the end time for time tracking
+    private $rounds         = null;     // number of rounds the test will run
+    private $concurrency    = null;     // number of request run at the same time
 
     /**
      * Initialize the test engine.
@@ -66,22 +69,30 @@ class APITestEngine
      * This method will start the tests readed out of the given directory.
      * @param  string $path Directory Path with tests
      */
-    public function run($path)
+    public function run($path, $n = 1, $c = 1)
     {
         $path = rtrim($path, DIRECTORY_SEPARATOR);
         if (is_dir($path))
         {
-            if ($handle = opendir($path))
-            {
-                while (false !== ($file = readdir($handle)))
+            $this->rounds = $n;
+            $this->concurrency = $c;
+            $this->startTime = microtime(true);
+            for ($i=0; $i < $n; $i++)
+            { 
+                if ($handle = opendir($path))
                 {
-                    if ($file != "." && $file != "..")
+                
+                    while (false !== ($file = readdir($handle)))
                     {
-                        $this->testParser($path.DIRECTORY_SEPARATOR.$file);
+                        if ($file != "." && $file != "..")
+                        {
+                            $this->testParser($path.DIRECTORY_SEPARATOR.$file);
+                        }
                     }
                 }
                 closedir($handle);
             }
+            $this->endTime = microtime(true);
         }
         else
         {
@@ -165,69 +176,98 @@ class APITestEngine
 
         try
         {
-            // Get cURL resource
-            $curl = curl_init();
-            $data_string = '';
-            // set data
-            if ($data !== null && (strtolower($method) == 'post' || strtolower($method) == 'put'))
+            $mh = curl_multi_init();
+            $curls = array(); 
+            for ($curlIndex=0; $curlIndex < $this->concurrency; $curlIndex++)
             {
+                // Get cURL resource
+                $curls[$curlIndex] = curl_init();
+                $curl = &$curls[$curlIndex];
+                $data_string = '';
+                // set data
+                if ($data !== null && (strtolower($method) == 'post' || strtolower($method) == 'put'))
+                {
 
-                // convert data to str
-                $data_string = json_encode($data);
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
-            }
-            else if($data !== null && strtolower($method) == 'get')
-            {
-                $url = $url.'?';
-                foreach($data as $key => $value)
-                { 
-                    $url = $url.$key.'='.$data[$key].'&';
+                    // convert data to str
+                    $data_string = json_encode($data);
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
+                }
+                else if($data !== null && strtolower($method) == 'get')
+                {
+                    $url = $url.'?';
+                    foreach($data as $key => $value)
+                    { 
+                        $url = $url.$key.'='.$data[$key].'&';
+                    }
+
+                    // remove last AND
+                    $url = substr($url, -1);
                 }
 
-                // remove last AND
-                $url = substr($url, -1);
+                // Set some options - we are passing in a useragent too here
+                curl_setopt_array($curl, array(
+                    CURLOPT_RETURNTRANSFER => 1,
+                    CURLOPT_URL => $url,
+                    CURLOPT_USERAGENT => 'Zebresel Terminal Tests',
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_HEADER => 1,
+                    CURLOPT_COOKIESESSION => true,
+                    CURLOPT_COOKIEFILE => $this->tmpPath,
+                    CURLOPT_COOKIEJAR => $this->tmpPath,
+                    CURLOPT_FOLLOWLOCATION => 1,
+                ));
+
+                // set the correct method
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($method));   
+
+                // set header
+                $defaultHeader = [
+                    'Content-Type' => 'application/json; charset=utf-8',
+                    'Content-Length' => mb_strlen($data_string)
+                ];
+
+                if ($header !== null && is_array($header))
+                {
+                    $defaultHeader = array_merge($defaultHeader, $header);
+                }
+
+                $finalHeader = [];
+                foreach ($defaultHeader as $key => $value)
+                {
+                    $finalHeader[] = "{$key}: {$value}";
+                }
+                
+                curl_setopt($curl, CURLOPT_HTTPHEADER, $finalHeader);
+                //curl_setopt($curl, CURLOPT_HTTPHEADER,array("Expect:"));
+                
+                // save curl in array and add to multi request
+                curl_multi_add_handle($mh, $curls[$curlIndex]);                
             }
 
-            // Set some options - we are passing in a useragent too here
-            curl_setopt_array($curl, array(
-                CURLOPT_RETURNTRANSFER => 1,
-                CURLOPT_URL => $url,
-                CURLOPT_USERAGENT => 'Zebresel Terminal Tests',
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_HEADER => 1,
-                CURLOPT_COOKIESESSION => true,
-                CURLOPT_COOKIEFILE => $this->tmpPath,
-                CURLOPT_COOKIEJAR => $this->tmpPath,
-                CURLOPT_FOLLOWLOCATION => 1,
-            ));
-
-            // set the correct method
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($method));   
-
-            // set header
-            $defaultHeader = [
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Content-Length' => mb_strlen($data_string)
-            ];
-
-            if ($header !== null && is_array($header))
-            {
-                $defaultHeader = array_merge($defaultHeader, $header);
-            }
-
-            $finalHeader = [];
-            foreach ($defaultHeader as $key => $value)
-            {
-                $finalHeader[] = "{$key}: {$value}";
-            }
-            
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $finalHeader);
-            //curl_setopt($curl, CURLOPT_HTTPHEADER,array("Expect:"));
 
             $before = microtime(true);
 
+            $running = NULL;
+            do
+            {
+                curl_multi_exec($mh,$running);
+            } while($running > 0);
+           
+            $res = array();
+            foreach($curls as $index => $curl)
+            {
+                $res[] = curl_multi_getcontent($curls[$index]);
+            }
+           
+            foreach($curls as $index => $curl)
+            {
+                curl_multi_remove_handle($mh, $curls[$index]);
+            }
+            //curl_multi_close($mh);
+            //return $res; 
+
             // Send the request & save response to $resp
-            $resp = curl_exec($curl);
+            $resp = $res[0];
 
             // request finished
             $after = microtime(true);
@@ -272,7 +312,7 @@ class APITestEngine
             $result = $cb($headers, $json);
 
             // Close request to clear up some resources
-            curl_close($curl);
+            //curl_close($curl);
             usleep(50);
 
             if ($result === false)
@@ -306,8 +346,9 @@ class APITestEngine
             $this->logMsg('DEBUG', ' ');
             $this->logMsg('DEBUG', '------------------------------------------------------------------------------------------');
             $this->logMsg('DEBUG', ' ');
-
             $this->logMsg(($this->countFails!=0?'ERROR':'SUCCESS'), "\tTest finished with {$this->countFails} fails of {$this->count} tests.");
+            $this->logMsg('DEBUG', ' ');
+            $this->logMsg('DEBUG', "\tTest-Time: ". (($this->endTime - $this->startTime) . " sec\n"));
             $this->logMsg('DEBUG', ' ');
             $this->logMsg('DEBUG', '------------------------------------------------------------------------------------------');
             $this->logMsg('DEBUG', ' ');
