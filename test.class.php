@@ -403,6 +403,25 @@ class APITestEngine
     }
 
     /**
+     * This method will scan a object (type array) recrusive for global saved variables and will replace them.
+     * @param  Array &$object
+     */
+    private function replaceGlobalVariables(&$object)
+    {
+        foreach ($object as $key => &$value)
+        {
+            if (is_string($value))
+            {
+                $value = strtr($value, $GLOBALS['params']);
+            }
+            elseif(is_array($value))
+            {
+                $this->replaceGlobalVariables($value);
+            }
+        }
+    }
+
+    /**
      * This method will search the value inside the given dict using a keypath
      * @param  array    &$dict   
      * @param  string   $keypath e.g. 'account.id'
@@ -454,6 +473,10 @@ class APITestEngine
                         {
                             $requestParams = $this->mockObject($requestParams);
                         }
+
+                        // parse request params and replace globals
+                        $this->replaceGlobalVariables($requestParams);
+                        
                     }
 
                     $path = strtr($test['path'], $GLOBALS['params']);
