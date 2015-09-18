@@ -13,13 +13,13 @@ In the folder you will find `run.php`. Run this file with given params to setup 
 If you have written some tests. Then you can execute them with:
 
 ```bash
-$ php run.php <api url> <test dir> <mock dir>
+$ php run.php -u <api url> -t <test dir>  -m <mock dir> -n <number of rounds> -c <concurrency level>
 ```
 
 *Example:*
 
 ```bash
-$ php run.php http://localhost:3000/api example/tests/ example/mocks/
+php run.php -u "http://httpbin.org" -t "jsons/"  -m "mocks/" -n 10 -c 2
 ```
 
 
