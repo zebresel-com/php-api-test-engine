@@ -374,7 +374,7 @@ class APITestEngine
                 }
                 else if ( isset($resp[$key]) )
                 {
-                    if (is_string($value) && $value[0] === '$')
+                    if (is_string($value) && strlen($value) > 0 && $value[0] === '$')
                     {
                         $operator = explode(' ', $value);
                         if(isset($operator[1]))
