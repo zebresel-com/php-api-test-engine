@@ -58,7 +58,10 @@ A test can contain one or more subtests.
 
 **Options**
 
- - $nn means should be "not null"
+ - $nn - means should be "not null"
+ - $eq <keypath> - means check variable 1 of a response is equal to variable 2
+ - <keypath>.$c - will return the count of the keypath (used for arrays)
+ - $ia - means check variable is an array
  - *more options in the next version ...*
 
 

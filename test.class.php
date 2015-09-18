@@ -374,12 +374,43 @@ class APITestEngine
                 }
                 else if ( !is_array($value) && !is_array($resp[$key]))
                 {
-                    if ($value === '$nn')
+                    if ($value[0] === '$')
                     {
-                        if (!isset($resp[$key]))
+                        $operator = explode(' ', $value);
+                        if(isset($operator[1]))
                         {
-                            ++$errCount;
-                            $this->logMsg('ERROR', "Key {$key} is null.");
+                            $value = $operator[1];
+                        }
+
+                        $operator = $operator[0];
+
+                        if ($operator === '$nn')
+                        {
+                            if (!isset($resp[$key]))
+                            {
+                                ++$errCount;
+                                $this->logMsg('ERROR', "Key {$key} is null.");
+                            }
+                        }
+                        elseif($operator === '$eq')
+                        {
+                            $value = $this->valueForKeyPath($resp, $key);
+
+                            if($value != $resp[$key])
+                            {
+                                ++$errCount;
+                                $this->logMsg('ERROR', "Key {$key} is not equal {$value} != {$resp[$key]}.");
+                            }
+                        }
+                        elseif($operator === '$ia')
+                        {
+                            $value = $this->valueForKeyPath($resp, $key);
+
+                            if(is_array($resp[$key]))
+                            {
+                                ++$errCount;
+                                $this->logMsg('ERROR', "Key {$key} is not equal {$value} != {$resp[$key]}.");
+                            }
                         }
                     }
                     else if($value != $resp[$key])
@@ -435,7 +466,15 @@ class APITestEngine
 
         foreach($path as $key)
         {
-            $result = &$result[$key];
+            // what retrieve the count of the path
+            if($key === '$c' && is_array($result))
+            {
+                $result = count($result);
+            }
+            else
+            {
+                $result = &$result[$key];
+            }
         }
         
         return $result;
