@@ -372,9 +372,9 @@ class APITestEngine
                 {
                     $this->recrusiveJsonValidation( $resp[$key], $value, $errCount );
                 }
-                else if ( !is_array($value) && !is_array($resp[$key]))
+                else if ( isset($resp[$key]) )
                 {
-                    if ($value[0] === '$')
+                    if (is_string($value) && $value[0] === '$')
                     {
                         $operator = explode(' ', $value);
                         if(isset($operator[1]))
