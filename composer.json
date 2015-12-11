@@ -3,6 +3,7 @@
 	"description": "This is a simple API Test-Engine. With simple JSON files you can run tests for all your RESTful API's.",
 	"keywords": ["restful", "test", "api"],
 	"license": "MIT",
+	"type": "library",
 	"authors": [
 		{
 			"name": "Kristof Friess"
@@ -12,5 +13,10 @@
 	"minimum-stability": "stable",
 	"require": {
 		"php": ">=5.5"
-	}
+	},
+	"extra": {
+        "branch-alias": {
+            "dev-master": "dev-master"
+        }
+    }
 }
