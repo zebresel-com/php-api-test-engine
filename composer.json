@@ -8,6 +8,7 @@
 			"name": "Kristof Friess"
 		}
 	],
+	"minimum-stability": "dev",
 	"require": {
 		"php": ">=5.6"
 	}
