@@ -9,8 +9,6 @@
 			"name": "Kristof Friess"
 		}
 	],
-	"version" : "1.0",
-	"minimum-stability": "stable",
 	"require": {
 		"php": ">=5.5"
 	},
